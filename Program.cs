@@ -7,6 +7,7 @@ var app = builder.Build();
 
 List<Company> companies = new(); /// In-memory storage for companies
 int nextId = 1; /// Simple ID generator
+var validator = new CompanyValidator(companies); 
 
 app.MapGet("/", () => "Welcome to the CompanyAPI"); /// Root endpoint
 
@@ -37,5 +38,35 @@ app.MapPost("/companies", (Company company) =>
 // GET /companies
 /// Returns the list of all stored companies
 app.MapGet("/companies", () => companies);
+
+// GET /companies/search?name=googl
+app.MapGet("/companies/search", (string name) =>
+{
+    if (string.IsNullOrWhiteSpace(name))
+        return Results.BadRequest(new
+        {
+            Status = 400,
+            Message = "Please provide a valid name to search."
+        });
+
+    var results = companies
+        .Where(c => c.Name.Trim().Contains(name.Trim(), StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    if (!results.Any())
+    {
+        return Results.BadRequest(new
+        {
+            Message = "No company available"
+        });
+    }
+
+    // If found, return only the company names
+    var companyNames = results.Select(c => c.Name);
+    return Results.Ok(new
+    {
+        Companies = companyNames
+    });
+});
 
 app.Run(); /// Start the application

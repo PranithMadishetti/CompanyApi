@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using CompanyApi.Models;
 
 namespace CompanyApi.Services;
@@ -5,7 +6,7 @@ namespace CompanyApi.Services;
 
 /// Validates Company objects for correct name length, URL format, and relevance
 
-public static class CompanyValidator
+public class CompanyValidator
 {
     public static (bool IsValid, string ErrorMessage) Validate(Company company) /// Validates the company object
     {
@@ -22,5 +23,22 @@ public static class CompanyValidator
             return (false, "Hmm, the company name doesn't seem related to the website you provided."); /// Relevance check
 
         return (true, string.Empty); /// Valid company
+    }
+
+    private readonly List<Company> comp;
+
+    public CompanyValidator(List<Company> companies)
+    {
+        comp = companies;
+    }
+
+    public IEnumerable<Company> SearchByName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Enumerable.Empty<Company>();
+
+        return comp
+            .Where(c => c.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 }
